@@ -4,6 +4,7 @@
 #define GAMEPLAYER
 class GamePlayer : public QObject
 {
+    Q_OBJECT
 public:
     GamePlayer::GamePlayer();
     void eat(Foods *food);
@@ -18,5 +19,9 @@ private:
     int money;
     int calo;
     int stomach;
+signals:
+    void offLimit(int reason);
+private slots:
+    void updateByGameTime();
 };
 #endif
