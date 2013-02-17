@@ -1,8 +1,13 @@
 #include <QtCore/QString>
 #include <QtTest/QtTest>
+#include<QTimer>
+#include<QEventLoop>
 #include<HEADER/gameTime.h>
 #include<HEADER/GamePlayer.h>
 #include<HEADER/Foods.h>
+#include<HEADER/GameWorld.h>
+#include<HEADER/Gindy5.h>
+
 class GamelogicTest : public QObject
 {
     Q_OBJECT
@@ -18,6 +23,9 @@ private Q_SLOTS:
     void addHour();
     void playerEat();
     void playerEatOffLimit();
+    void worldTimeUpdate();
+    void gindy5AsWorldWrapper();
+    void lastDay();
 };
 
 GamelogicTest::GamelogicTest()
@@ -53,6 +61,9 @@ void GamelogicTest::addMinute()
     gtime2->resetTime();
     gtime2->addMinute(6);
     QCOMPARE(gtime2->getMinute(),6);
+    gtime2->addMinute(55);
+    QCOMPARE(gtime2->getMinute(),1);
+    QCOMPARE(gtime2->getHour(),1);
     delete gtime2;
 }
 
@@ -73,6 +84,9 @@ void GamelogicTest::addHour()
     QCOMPARE(gtime->getHour(),20);
     gtime->addHour(-5);
     QCOMPARE(gtime->getHour(),15);
+    gtime->addHour(10);
+    QCOMPARE(gtime->getHour(),1);
+    QCOMPARE(gtime->getDay(),1);
     delete gtime;
 }
 
@@ -122,8 +136,60 @@ void GamelogicTest::playerEat()
 
 void GamelogicTest::playerEatOffLimit()
 {
+    GamePlayer *player1=new GamePlayer;
+    Foods *food=new Foods;
+    player1->setMoney(20);
+    food->setPrice(50);
+    food->setMassForStomach(200);
+    player1->eat(food);
+    QVERIFY2(player1->getMoney()>=0,"Out of Money");
+    QVERIFY2(player1->getStomach()<100,"Too Much Eat");
+    delete food;
+    delete player1;
 }
 
-QTEST_APPLESS_MAIN(GamelogicTest)
+void GamelogicTest::worldTimeUpdate()
+{
+    QEventLoop looper;
+    Gindy5 *gindyWrap=new Gindy5;
+    QObject::connect(gindyWrap,SIGNAL(critical()),&looper,SLOT(quit()));
+    gindyWrap->startWorld();
+    QVERIFY2(gindyWrap->gtime.getMinute()>=0,"time < 0");
+    QVERIFY2(gindyWrap->gtime.getHour()>=0,"time < 0");
+    looper.exec();
+    QVERIFY2(gindyWrap->getStatus()==2,"false gindy status");
+    QEventLoop looper2;
+    QObject::connect(gindyWrap,SIGNAL(criticalMost()),&looper2,SLOT(quit()));
+    looper2.exec();
+    qDebug()<<"Game Over";
+    delete gindyWrap;
+}
+
+void GamelogicTest::gindy5AsWorldWrapper()
+{
+    Gindy5 *gindyWrap=new Gindy5;
+    QCOMPARE(gindyWrap->getStatus(),0);
+    gindyWrap->startWorld();
+    QCOMPARE(gindyWrap->getStatus(),1);
+    delete gindyWrap;
+}
+
+
+
+void GamelogicTest::lastDay()
+{
+    Gindy5 *gindyWrap=new Gindy5;
+    gindyWrap->gtime.day=30;
+    gindyWrap->gtime.addHour(5);
+    gindyWrap->gtime.addHour(5);
+    gindyWrap->gtime.addHour(5);
+    gindyWrap->gtime.addHour(5);
+    gindyWrap->gtime.addHour(5);
+    qDebug()<<gindyWrap->getStatus();
+    QVERIFY2(gindyWrap->getStatus()==3,"game must me end");
+    delete gindyWrap;
+}
+
+QTEST_MAIN(GamelogicTest)
 
 #include "tst_gamelogictest.moc"
