@@ -50,10 +50,10 @@ void gameTime::addHour(int houradd)
 {
     if(hour+houradd>24)
     {
-        if(day+1>7)
+        if(day+1>30)
         {
             emit critical(4);
-            qDebug()<<"from add hour over 7 days";
+            qDebug()<<"from add hour";
             return;
         }
         else
