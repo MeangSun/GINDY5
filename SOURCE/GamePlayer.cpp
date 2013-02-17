@@ -1,3 +1,4 @@
+#include<QDebug>
 #include<HEADER/GamePlayer.h>
 GamePlayer::GamePlayer()
 {
@@ -8,9 +9,20 @@ GamePlayer::GamePlayer()
 
 void GamePlayer::eat(Foods *food)
 {
+    if(money-food->getPrice()<0)
+    {
+        emit offLimit(1);
+        return;
+    }
+    if(stomach+food->getMassForStomach()>100)
+    {
+        emit offLimit(2);
+        return;
+    }
     money=money-food->getPrice();
-    calo=calo+food->getCalo();
     stomach=stomach+food->getMassForStomach();
+    calo=calo+food->getCalo();
+
 }
 
 int GamePlayer::getMoney()
@@ -46,6 +58,17 @@ int GamePlayer::getStomach()
 void GamePlayer::setStomach(int amount)
 {
     stomach=amount;
+}
+
+void GamePlayer::updateByGameTime()
+{
+
+    if(stomach-1<0)
+    {
+        emit offLimit(3);
+        return;
+    }
+    stomach=stomach-1;
 }
 
 
